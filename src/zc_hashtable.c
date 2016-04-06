@@ -8,7 +8,6 @@
 
 #include <stdlib.h>
 #include <errno.h>
-#include <pthread.h>
 
 #include "zc_defs.h"
 #include "zc_hashtable.h"

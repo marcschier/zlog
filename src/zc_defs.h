@@ -9,6 +9,7 @@
 #ifndef __zc_defs_h
 #define __zc_defs_h
 
+#include "zc_threads.h"
 #include "zc_profile.h"
 #include "zc_arraylist.h"
 #include "zc_hashtable.h"

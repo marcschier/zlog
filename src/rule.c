@@ -10,18 +10,11 @@
 
 #include <string.h>
 #include <ctype.h>
-#ifndef _WIN32
-#include <syslog.h>
-#else
-#include "zlog_win.h"
-#endif
 #include <errno.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h>
-#include <pthread.h>
 
 #include "rule.h"
 #include "format.h"
@@ -209,7 +202,7 @@ static int zlog_rule_output_static_file_rotate(zlog_rule_t * a_rule, zlog_thread
 		return 0;
 	}
 
-	if (stat(a_rule->file_path, &info)) {
+	if (zlog_stat(a_rule->file_path, &info)) {
 		zc_warn("stat [%s] fail, errno[%d], maybe in rotating", a_rule->file_path, errno);
 		return 0;
 	}
@@ -330,7 +323,7 @@ static int zlog_rule_output_dynamic_file_rotate(zlog_rule_t * a_rule, zlog_threa
 		return 0;
 	}
 
-	if (stat(path, &info)) {
+	if (zlog_stat(path, &info)) {
 		zc_warn("stat [%s] fail, errno[%d], maybe in rotating", path, errno);
 		return 0;
 	}

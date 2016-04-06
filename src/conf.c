@@ -14,27 +14,13 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-
-#ifndef _WIN32
-#include <unistd.h>
-#else
-#include "zlog_win.h"
-#endif
-
 #include <time.h>
-
 #include "conf.h"
 #include "rule.h"
 #include "format.h"
 #include "level_list.h"
 #include "rotater.h"
 #include "zc_defs.h"
-
-#ifdef _WIN32
-#define STATS_FILE stat
-#else
-#define STATS_FILE lstat
-#endif
 
 /*******************************************************************************/
 #define ZLOG_CONF_DEFAULT_FORMAT "default = \"%D %V [%p:%F:%L] %m%n\""
@@ -427,7 +413,7 @@ exit:
 static int zlog_conf_build_with_file(zlog_conf_t * a_conf)
 {
 	int rc = 0;
-	struct zlog_stat a_stat;
+	struct zlog_lstat a_stat;
 	struct tm local_time;
 	FILE *fp = NULL;
 
@@ -442,7 +428,7 @@ static int zlog_conf_build_with_file(zlog_conf_t * a_conf)
 	int section = 0;
 	/* [global:1] [levels:2] [formats:3] [rules:4] */
 
-	if (STATS_FILE(a_conf->file, &a_stat)) {
+	if (zlog_lstat(a_conf->file, &a_stat)) {
 		zc_error("lstat conf file[%s] fail, errno[%d]", a_conf->file,
 			 errno);
 		return -1;

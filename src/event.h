@@ -9,9 +9,6 @@
 #ifndef __zlog_event_h
 #define __zlog_event_h
 
-#include <sys/types.h>  /* for pid_t */
-#include <sys/time.h>   /* for struct timeval */
-#include <pthread.h>    /* for pthread_t */
 #include <stdarg.h>     /* for va_list */
 #include "zc_defs.h"
 
@@ -53,12 +50,12 @@ typedef struct {
 	zlog_time_cache_t *time_caches;
 	int time_cache_count;
 
-	pid_t pid;
-	pid_t last_pid;
+    zc_pid_t pid;
+    zc_pid_t last_pid;
 	char pid_str[30 + 1];
 	size_t pid_str_len;
 
-	pthread_t tid;
+	zc_tid_t tid;
 	char tid_str[30 + 1];
 	size_t tid_str_len;
 

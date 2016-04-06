@@ -12,16 +12,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
-
-#include <pthread.h>
-#include <unistd.h>
-#include <sys/time.h>
-
 #include "zc_defs.h"
 #include "event.h"
-#ifdef _WIN32
-#include <Winsock2.h>
-#endif
 
 void zlog_event_profile(zlog_event_t * a_event, int flag)
 {
@@ -71,8 +63,8 @@ zlog_event_t *zlog_event_new(int time_cache_count)
 	 * at the zlog_init we gethostname,
 	 * u don't always change your hostname, eh?
 	 */
-	if (gethostname(a_event->host_name, sizeof(a_event->host_name) - 1)) {
-		zc_error("gethostname fail, errno[%d]", errno);
+	if (zlog_gethostname(a_event->host_name, sizeof(a_event->host_name) - 1)) {
+		zc_error("zlog_gethostname fail, errno[%d]", errno);
 		goto err;
 	}
 
@@ -82,7 +74,7 @@ zlog_event_t *zlog_event_new(int time_cache_count)
 	 * as in whole lifecycle event persists
 	 * even fork to oth pid, tid not change
 	 */
-	a_event->tid = pthread_self();
+	a_event->tid = zc_thread_self();
 
 	a_event->tid_str_len = sprintf(a_event->tid_str, "%lu", (unsigned long)a_event->tid);
 	a_event->tid_hex_str_len = sprintf(a_event->tid_hex_str, "0x%x", (unsigned int)a_event->tid);
@@ -121,7 +113,7 @@ void zlog_event_set_fmt(zlog_event_t * a_event,
 	 * when does user fork his process
 	 * so clean here, and fetch at spec.c
 	 */
-	a_event->pid = (pid_t) 0;
+	a_event->pid = (zc_pid_t) 0;
 
 	/* in a event's life cycle, time will be get when spec need,
 	 * and keep unchange though all event's life cycle
@@ -157,7 +149,7 @@ void zlog_event_set_hex(zlog_event_t * a_event,
 	 * when does user fork his process
 	 * so clean here, and fetch at spec.c
 	 */
-	a_event->pid = (pid_t) 0;
+	a_event->pid = (zc_pid_t) 0;
 
 	/* in a event's life cycle, time will be get when spec need,
 	 * and keep unchange though all event's life cycle

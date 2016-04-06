@@ -82,7 +82,7 @@ int zc_str_replace_env(char *str, size_t str_size)
 	char fmt[MAXLEN_CFG_LINE + 1];
 	char env_key[MAXLEN_CFG_LINE + 1];
 	char env_value[MAXLEN_CFG_LINE + 1];
-	int str_len;
+	size_t str_len;
 	int env_value_len;
 	int nscan;
 	int nread;

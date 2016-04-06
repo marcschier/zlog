@@ -9,9 +9,9 @@
 #include <string.h>
 
 #ifdef _WIN32
-#include <unixem/glob.h>
-#endif
+#else
 #include <glob.h>
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,9 +19,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <fcntl.h>
-#include <pthread.h>
 
 #include "zc_defs.h"
 #include "rotater.h"
@@ -68,16 +66,14 @@ void zlog_rotater_del(zlog_rotater_t *a_rotater)
 {
 	zc_assert(a_rotater,);
 
-	if (a_rotater->lock_fd != INVALID_LOCK_FD) {
-		if (!unlock_file(a_rotater->lock_fd)) {
+	if (a_rotater->lock_fd != NULL) {
+		if (!zc_unlock_fd(a_rotater->lock_fd)) {
 			zc_error("close fail, errno[%d]", errno);
 		}
-        a_rotater->lock_fd = INVALID_LOCK_FD;
+        a_rotater->lock_fd = NULL;
 	}
 
-	if (pthread_mutex_destroy(&(a_rotater->lock_mutex))) {
-		zc_error("pthread_mutex_destroy fail, errno[%d]", errno);
-	}
+    zc_mutex_destroy(a_rotater->lock_mutex);
 
 	free(a_rotater);
 	zc_debug("zlog_rotater_del[%p]", a_rotater);
@@ -96,13 +92,13 @@ zlog_rotater_t *zlog_rotater_new(char *lock_file)
 		return NULL;
 	}
 
-	if (pthread_mutex_init(&(a_rotater->lock_mutex), NULL)) {
-		zc_error("pthread_mutex_init fail, errno[%d]", errno);
+	if (zc_mutex_init(&(a_rotater->lock_mutex))) {
+		zc_error("zc_mutex_init fail, errno[%d]", errno);
 		free(a_rotater);
 		return NULL;
 	}
 
-	a_rotater->lock_fd = INVALID_LOCK_FD;
+	a_rotater->lock_fd = NULL;
 	a_rotater->lock_file = lock_file;
 
 	//zlog_rotater_profile(a_rotater, ZC_DEBUG);
@@ -173,6 +169,7 @@ static int zlog_file_cmp(zlog_file_t * a_file_1, zlog_file_t * a_file_2)
 
 static int zlog_rotater_add_archive_files(zlog_rotater_t * a_rotater)
 {
+#if 0
 	int rc = 0;
 	glob_t glob_buf;
 	size_t pathc;
@@ -219,6 +216,7 @@ exit:
 	return 0;
 err:
 	globfree(&glob_buf);
+#endif
 	return -1;
 }
 
@@ -340,8 +338,8 @@ static int zlog_rotater_roll_files(zlog_rotater_t * a_rotater)
 
 static int zlog_rotater_parse_archive_path(zlog_rotater_t * a_rotater)
 {
-	int nwrite;
-	int nread;
+	size_t nwrite;
+	size_t nread;
 	char *p;
 	size_t len;
 
@@ -463,17 +461,17 @@ static int zlog_rotater_trylock(zlog_rotater_t *a_rotater)
 {
 	int rc;
 
-	rc = pthread_mutex_trylock(&(a_rotater->lock_mutex));
+	rc = zc_mutex_trylock(a_rotater->lock_mutex);
 	if (rc == EBUSY) {
-		zc_warn("pthread_mutex_trylock fail, as lock_mutex is locked by other threads");
+		zc_warn("zc_mutex_trylock fail, as lock_mutex is locked by other threads");
 		return -1;
 	} else if (rc != 0) {
-		zc_error("pthread_mutex_trylock fail, rc[%d]", rc);
+		zc_error("zc_mutex_trylock fail, rc[%d]", rc);
 		return -1;
 	}
 
-    a_rotater->lock_fd = lock_file(a_rotater->lock_file);
-	if (a_rotater->lock_fd == INVALID_LOCK_FD) {
+    a_rotater->lock_fd = zc_lock_fd(a_rotater->lock_file);
+	if (a_rotater->lock_fd == NULL) {
 		return -1;
 	}
 	return 0;
@@ -483,15 +481,15 @@ static int zlog_rotater_unlock(zlog_rotater_t *a_rotater)
 {
 	int rc = 0;
 
-    if (!unlock_file(a_rotater->lock_fd)) {
+    if (!zc_unlock_fd(a_rotater->lock_fd)) {
 		rc = -1;
 	} else {
-        a_rotater->lock_fd = INVALID_LOCK_FD;
+        a_rotater->lock_fd = NULL;
     }
 
-	if (pthread_mutex_unlock(&(a_rotater->lock_mutex))) {
+	if (zc_mutex_unlock(a_rotater->lock_mutex)) {
 		rc = -1;
-		zc_error("pthread_mutext_unlock fail, errno[%d]", errno);
+		zc_error("zc_mutex_unlock fail, errno[%d]", errno);
 	}
 
 	return rc;
@@ -499,7 +497,7 @@ static int zlog_rotater_unlock(zlog_rotater_t *a_rotater)
 
 int zlog_rotater_rotate(zlog_rotater_t *a_rotater,
 		char *base_path, size_t msg_len,
-		char *archive_path, long archive_max_size, int archive_max_count)
+		char *archive_path, size_t archive_max_size, int archive_max_count)
 {
 	int rc = 0;
 	struct zlog_stat info;
@@ -511,7 +509,7 @@ int zlog_rotater_rotate(zlog_rotater_t *a_rotater,
 		return 0;
 	}
 
-	if (stat(base_path, &info)) {
+	if (zlog_stat(base_path, &info)) {
 		rc = -1;
 		zc_error("stat [%s] fail, errno[%d]", base_path, errno);
 		goto exit;

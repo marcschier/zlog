@@ -8,7 +8,6 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <pthread.h>
 #include <errno.h>
 #include <stdint.h>
 
@@ -172,7 +171,7 @@ static int zlog_buf_resize(zlog_buf_t * a_buf, size_t increment)
 
 	if (a_buf->size_max == 0) {
 		/* unlimit */
-		new_size = a_buf->size_real + 1.5 * increment;
+		new_size = (size_t)(a_buf->size_real + 1.5f * increment);
 	} else {
 		/* limited  */
 		if (a_buf->size_real + increment <= a_buf->size_max) {
@@ -208,7 +207,7 @@ int zlog_buf_vprintf(zlog_buf_t * a_buf, const char *format, va_list args)
 {
 	va_list ap;
 	size_t size_left;
-	int nwrite;
+	size_t nwrite;
 
 	if (!a_buf->start) {
 		zc_error("pre-use of zlog_buf_resize fail, so can't convert");
@@ -265,7 +264,7 @@ int zlog_buf_vprintf(zlog_buf_t * a_buf, const char *format, va_list args)
 
 /*******************************************************************************/
 /* if width > num_len, 0 padding, else output num */
-int zlog_buf_printf_dec32(zlog_buf_t * a_buf, uint32_t ui32, int width)
+int zlog_buf_printf_dec32(zlog_buf_t * a_buf, uint32_t ui32, size_t width)
 {
 	unsigned char *p;
 	char *q;
@@ -330,7 +329,7 @@ int zlog_buf_printf_dec32(zlog_buf_t * a_buf, uint32_t ui32, int width)
 	return 0;
 }
 /*******************************************************************************/
-int zlog_buf_printf_dec64(zlog_buf_t * a_buf, uint64_t ui64, int width)
+int zlog_buf_printf_dec64(zlog_buf_t * a_buf, uint64_t ui64, size_t width)
 {
 	unsigned char *p;
 	char *q;
@@ -421,7 +420,7 @@ int zlog_buf_printf_dec64(zlog_buf_t * a_buf, uint64_t ui64, int width)
 	return 0;
 }
 /*******************************************************************************/
-int zlog_buf_printf_hex(zlog_buf_t * a_buf, uint32_t ui32, int width)
+int zlog_buf_printf_hex(zlog_buf_t * a_buf, uint32_t ui32, size_t width)
 {
 	unsigned char *p;
 	char *q;
@@ -584,7 +583,7 @@ int zlog_buf_adjust_append(zlog_buf_t * a_buf, const char *str, size_t str_len,
 	/*  |-space_len---|-source_len-|  right_adjust */
 	/*  |-(size_real-1)---|           size not enough */
 
-	if (append_len > a_buf->end - a_buf->tail) {
+	if (append_len > (size_t)(a_buf->end - a_buf->tail)) {
 		int rc = 0;
 		//zc_debug("size_left not enough, resize");
 		rc = zlog_buf_resize(a_buf, append_len - (a_buf->end -a_buf->tail));

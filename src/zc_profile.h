@@ -25,7 +25,7 @@ enum zc_profile_flag {
 };
 
 
-#if defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L
+#if defined (_MSC_VER) || (defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L)
 	#define zc_debug(...) \
 		zc_profile_inner(ZC_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
 	#define zc_warn(...) \

@@ -8,7 +8,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
 #include <errno.h>
 
 #include "zc_defs.h"

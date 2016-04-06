@@ -6,7 +6,6 @@
  * Licensed under the LGPL v2.1, see the file COPYING in base directory.
  */
 
-#include <pthread.h>
 #include <errno.h>
 
 #include "zc_defs.h"

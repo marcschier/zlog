@@ -12,11 +12,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#include <sys/time.h>
 #include <time.h>
 #include <errno.h>
 #include <sys/types.h>
-#include <unistd.h>
 
 #include "conf.h"
 #include "spec.h"
@@ -201,7 +199,7 @@ static int zlog_spec_write_pid(zlog_spec_t * a_spec, zlog_thread_t * a_thread, z
 {
 	/* 1st in event lifecycle */
 	if (!a_thread->event->pid) {
-		a_thread->event->pid = getpid();
+		a_thread->event->pid = zc_proc_self();
 
 		/* compare with previous event */
 		if (a_thread->event->pid != a_thread->event->last_pid) {
@@ -258,8 +256,8 @@ static int zlog_spec_write_usrmsg(zlog_spec_t * a_spec, zlog_thread_t * a_thread
 		}
 	} else if (a_thread->event->generate_cmd == ZLOG_HEX) {
 		int rc;
-		long line_offset;
-		long byte_offset;
+		size_t line_offset;
+        size_t byte_offset;
 
 		/* thread buf start == null or len <= 0 */
 		if (a_thread->event->hex_buf == NULL) {

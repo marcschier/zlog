@@ -10,12 +10,11 @@
 #define __zlog_rotater_h
 
 #include "zc_defs.h"
-#include "lockfile.h"
 
 typedef struct zlog_rotater_s {
-	pthread_mutex_t lock_mutex;
+    zc_mutex_t lock_mutex;
 	char *lock_file;
-	LOCK_FD lock_fd;
+    zc_lock_fd_t lock_fd;
 
 	/* single-use members */
 	char *base_path;			/* aa.log */
@@ -39,7 +38,7 @@ void zlog_rotater_del(zlog_rotater_t *a_rotater);
  */
 int zlog_rotater_rotate(zlog_rotater_t *a_rotater,
 		char *base_path, size_t msg_len,
-		char *archive_path, long archive_max_size, int archive_max_count);
+		char *archive_path, size_t archive_max_size, int archive_max_count);
 
 void zlog_rotater_profile(zlog_rotater_t *a_rotater, int flag);
 

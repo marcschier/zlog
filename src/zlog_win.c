@@ -2,31 +2,110 @@
 #include <string.h>
 #include <windows.h>
 #include <stdio.h>
-#include <tchar.h>
 #include <stdlib.h>
-#include "zlog_win.h"
 #include <errno.h>
-#include <unistd.h>
+#include <assert.h>
+#include "zc_xplatform.h"
 
-int gethostname_w(char *name, size_t len)
-{
-	int rc = gethostname(name, len);
-	DWORD newlen = len;
+/* Credits Henry Rawas (henryr@schakra.com) */
 
-	if (rc != 0) {
-		rc = GetComputerNameEx(ComputerNameDnsHostname, name, &newlen);
-		if (rc == 0) {
-			sprintf(name, "noname");
-		}
-	}
-	return 0;
+#define DELTA_EPOCH_IN_MICROSECS  11644473600000000Ui64
+
+struct timezone {
+    int  tz_minuteswest; /* minutes W of Greenwich */
+    int  tz_dsttime;     /* type of dst correction */
+};
+
+/* fnGetSystemTimePreciseAsFileTime is NULL if and only if it hasn't been initialized. */
+static VOID(WINAPI *fnGetSystemTimePreciseAsFileTime)(LPFILETIME) = NULL;
+
+static void InitHighResAbsoluteTime() {
+    FARPROC fp;
+    HMODULE module;
+
+    if (fnGetSystemTimePreciseAsFileTime != NULL)
+        return;
+
+    /* Use GetSystemTimeAsFileTime as fallbcak where GetSystemTimePreciseAsFileTime is not available */
+    fnGetSystemTimePreciseAsFileTime = GetSystemTimeAsFileTime;
+    module = GetModuleHandleA("kernel32.dll");
+    if (module) {
+        fp = GetProcAddress(module, "GetSystemTimePreciseAsFileTime");
+        if (fp) {
+            fnGetSystemTimePreciseAsFileTime = (VOID(WINAPI*)(LPFILETIME)) fp;
+        }
+    }
+
+    assert(fnGetSystemTimePreciseAsFileTime != NULL);
 }
-#ifndef strcasecmp
-int strcasecmp (const char *sz1, const char *sz2)
-{
-  return stricmp (sz1, sz2);
+
+int gettimeofday_fast(struct timeval *tv, struct timezone *tz) {
+    FILETIME ft;
+    unsigned __int64 tmpres = 0;
+    static int tzflag;
+
+    if (NULL != tv) {
+        GetSystemTimeAsFileTime(&ft);
+
+        tmpres |= ft.dwHighDateTime;
+        tmpres <<= 32;
+        tmpres |= ft.dwLowDateTime;
+
+        /*converting file time to unix epoch*/
+        tmpres /= 10;  /*convert into microseconds*/
+        tmpres -= DELTA_EPOCH_IN_MICROSECS;
+        tv->tv_sec = (long)(tmpres / 1000000UL);
+        tv->tv_usec = (long)(tmpres % 1000000UL);
+    }
+
+    if (NULL != tz) {
+        if (!tzflag)
+        {
+            _tzset();
+            tzflag++;
+        }
+        tz->tz_minuteswest = _timezone / 60;
+        tz->tz_dsttime = _daylight;
+    }
+
+    return 0;
 }
-#endif
+
+int gettimeofday(struct timeval *tv, struct timezone *tz) {
+    FILETIME ft;
+    unsigned __int64 tmpres = 0;
+    static int tzflag;
+
+    if (NULL == fnGetSystemTimePreciseAsFileTime) {
+        InitHighResAbsoluteTime();
+    }
+
+    if (NULL != tv) {
+        fnGetSystemTimePreciseAsFileTime(&ft);
+
+        tmpres |= ft.dwHighDateTime;
+        tmpres <<= 32;
+        tmpres |= ft.dwLowDateTime;
+
+        /*converting file time to unix epoch*/
+        tmpres /= 10;  /*convert into microseconds*/
+        tmpres -= DELTA_EPOCH_IN_MICROSECS;
+        tv->tv_sec = (long)(tmpres / 1000000UL);
+        tv->tv_usec = (long)(tmpres % 1000000UL);
+    }
+
+    if (NULL != tz) {
+        if (!tzflag) {
+            _tzset();
+            tzflag++;
+        }
+        tz->tz_minuteswest = _timezone / 60;
+        tz->tz_dsttime = _daylight;
+    }
+
+    return 0;
+}
+
 #ifndef localtime_r
 struct tm *localtime_r(const time_t *timep, struct tm *result)
 {
@@ -38,6 +117,17 @@ struct tm *localtime_r(const time_t *timep, struct tm *result)
     return ret;
 }
 #endif
+
+int gethostname_nowinsock(char *name, size_t len)
+{
+    int rc;
+    rc = GetComputerNameExA(ComputerNameDnsHostname, name, &len);
+    if (rc == 0) {
+        sprintf(name, "localhost");
+    }
+    return 0;
+}
+
 int fsync (int fd)
 {
     HANDLE h = (HANDLE) _get_osfhandle (fd);
@@ -68,16 +158,4 @@ int fsync (int fd)
         return -1;
     }
     return 0;
-}
-
-void setenv(const char *name, const char *value)
-{
-#ifdef HAVE_SETENV
-    setenv(name, value, 1);
-#else
-    int len = strlen(value)+1+strlen(value)+1;
-    char *str = malloc(len);
-    sprintf(str, "%s=%s", name, value);
-    putenv(str);
-#endif
 }

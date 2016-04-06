@@ -15,7 +15,7 @@
 #define __zlog_rule_h
 
 #include <stdio.h>
-#include <pthread.h>
+#include <sys/types.h>
 
 #include "zc_defs.h"
 #include "format.h"
@@ -48,7 +48,7 @@ struct zlog_rule_s {
 	dev_t static_dev;
 	ino_t static_ino;
 
-	long archive_max_size;
+	size_t archive_max_size;
 	int archive_max_count;
 	char archive_path[MAXLEN_PATH + 1];
 	zc_arraylist_t *archive_specs;
