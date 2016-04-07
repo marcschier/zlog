@@ -446,7 +446,7 @@ static int zlog_conf_build_with_file(zlog_conf_t * a_conf)
 	 */
 	pline = line;
 	memset(&line, 0x00, sizeof(line));
-	while (fgets((char *)pline, sizeof(line) - (pline - line), fp) != NULL) {
+	while (fgets((char *)pline, (int)(sizeof(line) - (pline - line)), fp) != NULL) {
 		++line_no;
 		line_len = strlen(pline);
 		if (pline[line_len - 1] == '\n') {

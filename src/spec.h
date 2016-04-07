@@ -26,7 +26,7 @@ typedef int (*zlog_spec_gen_fn) (zlog_spec_t * a_spec,
 
 struct zlog_spec_s {
 	char *str;
-	int len;
+	size_t len;
 
 	char time_fmt[MAXLEN_CFG_LINE + 1];
 	int time_cache_index;

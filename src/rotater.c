@@ -103,9 +103,6 @@ zlog_rotater_t *zlog_rotater_new(char *lock_file)
 
 	//zlog_rotater_profile(a_rotater, ZC_DEBUG);
 	return a_rotater;
-
-	zlog_rotater_del(a_rotater);
-	return NULL;
 }
 
 /*******************************************************************************/
@@ -367,7 +364,7 @@ static int zlog_rotater_parse_archive_path(zlog_rotater_t * a_rotater)
 		}
 
 		nread = 0;
-		sscanf(p, "#%d%n", &(a_rotater->num_width), &nread);
+		sscanf(p, "#%d%zn", &(a_rotater->num_width), &nread);
 		if (nread == 0) nread = 1;
 		if (*(p+nread) == 'r') {
 			a_rotater->mv_type = ROLLING;

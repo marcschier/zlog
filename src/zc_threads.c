@@ -77,11 +77,28 @@ int zc_tls_destroy(zc_tls_t tls)
 
 int zc_mutex_init(zc_mutex_t* mtx)
 {
+    int rc;
 #if !defined(__STDC_NO_THREADS__)
-    return mtx_init((mtx_t*)mtx, mtx_plain | mtx_recursive);
+    mtx_t* mutex = malloc(sizeof(mtx_t));
+    if (!mutex)
+        return -1;
+    rc = mtx_init(mutex, mtx_plain | mtx_recursive);
+    if(rc != thrd_success)
+        goto err;
 #else
-    return pthread_mutex_init((pthread_mutex_t*)mtx, NULL);
+    pthread_mutex_t* mutex = malloc(sizeof(pthread_mutex_t));
+    if (!mutex)
+        return -1;
+    rc = pthread_mutex_init(mutex, NULL);
+    if (rc != 0)
+        goto err;
 #endif
+    *mtx = mutex;
+    return 0;
+err:
+    free(mutex);
+    *mtx = NULL;
+    return rc;
 }
 
 int zc_mutex_trylock(zc_mutex_t mtx)
@@ -116,12 +133,14 @@ int zc_mutex_unlock(zc_mutex_t mtx)
 
 int zc_mutex_destroy(zc_mutex_t mtx)
 {
+    int rc = 0;
 #if !defined(__STDC_NO_THREADS__)
     mtx_destroy((mtx_t*)mtx);
-    return 0;
 #else
-    return pthread_mutex_destroy((pthread_mutex_t*)tls);
+    rc = pthread_mutex_destroy((pthread_mutex_t*)tls);
 #endif
+    free(mtx);
+    return rc;
 }
 
 int zc_atomic_inc(volatile int* ptr)

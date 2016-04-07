@@ -627,7 +627,7 @@ zlog_spec_t *zlog_spec_new(char *pattern_start, char **pattern_next, int *time_c
 		/* a const string: /home/bb */
 		*pattern_next = strchr(p, '%');
 		if (*pattern_next) {
-			a_spec->len = *pattern_next - p;
+			a_spec->len = (size_t)(*pattern_next - p);
 		} else {
 			a_spec->len = strlen(p);
 			*pattern_next = p + a_spec->len;

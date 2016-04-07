@@ -121,7 +121,7 @@ struct tm *localtime_r(const time_t *timep, struct tm *result)
 int gethostname_nowinsock(char *name, size_t len)
 {
     int rc;
-    rc = GetComputerNameExA(ComputerNameDnsHostname, name, &len);
+    rc = GetComputerNameExA(ComputerNameDnsHostname, name, (LPDWORD)&len);
     if (rc == 0) {
         sprintf(name, "localhost");
     }

@@ -118,7 +118,7 @@ static int zlog_rule_output_static_file_single(zlog_rule_t * a_rule, zlog_thread
 
 	if (write(a_rule->static_fd,
 			zlog_buf_str(a_thread->msg_buf),
-			zlog_buf_len(a_thread->msg_buf)) < 0) {
+            (unsigned int)zlog_buf_len(a_thread->msg_buf)) < 0) {
 		zc_error("write fail, errno[%d]", errno);
 		return -1;
 	}
@@ -173,7 +173,7 @@ static int zlog_rule_output_static_file_rotate(zlog_rule_t * a_rule, zlog_thread
 	}
 
 	len = zlog_buf_len(a_thread->msg_buf);
-	if (write(fd, zlog_buf_str(a_thread->msg_buf), len) < 0) {
+	if (write(fd, zlog_buf_str(a_thread->msg_buf), (unsigned int)len) < 0) {
 		zc_error("write fail, errno[%d]", errno);
 		close(fd);
 		return -1;
@@ -260,7 +260,9 @@ static int zlog_rule_output_dynamic_file_single(zlog_rule_t * a_rule, zlog_threa
 		return -1;
 	}
 
-	if (write(fd, zlog_buf_str(a_thread->msg_buf), zlog_buf_len(a_thread->msg_buf)) < 0) {
+	if (write(fd, 
+        zlog_buf_str(a_thread->msg_buf), 
+        (unsigned int)zlog_buf_len(a_thread->msg_buf)) < 0) {
 		zc_error("write fail, errno[%d]", errno);
 		close(fd);
 		return -1;
@@ -301,7 +303,7 @@ static int zlog_rule_output_dynamic_file_rotate(zlog_rule_t * a_rule, zlog_threa
 	}
 
 	len = zlog_buf_len(a_thread->msg_buf);
-	if (write(fd, zlog_buf_str(a_thread->msg_buf), len) < 0) {
+	if (write(fd, zlog_buf_str(a_thread->msg_buf), (unsigned int)len) < 0) {
 		zc_error("write fail, errno[%d]", errno);
 		close(fd);
 		return -1;
@@ -352,7 +354,7 @@ static int zlog_rule_output_pipe(zlog_rule_t * a_rule, zlog_thread_t * a_thread)
 
 	if (write(a_rule->pipe_fd,
 			zlog_buf_str(a_thread->msg_buf),
-			zlog_buf_len(a_thread->msg_buf)) < 0) {
+            (unsigned int) zlog_buf_len(a_thread->msg_buf)) < 0) {
 		zc_error("write fail, errno[%d]", errno);
 		return -1;
 	}
@@ -449,7 +451,7 @@ static int zlog_rule_output_stdout(zlog_rule_t * a_rule,
 	}
 
 	if (write(STDOUT_FILENO,
-		zlog_buf_str(a_thread->msg_buf), zlog_buf_len(a_thread->msg_buf)) < 0) {
+		zlog_buf_str(a_thread->msg_buf), (unsigned int)zlog_buf_len(a_thread->msg_buf)) < 0) {
 		zc_error("write fail, errno[%d]", errno);
 		return -1;
 	}
@@ -467,7 +469,7 @@ static int zlog_rule_output_stderr(zlog_rule_t * a_rule,
 	}
 
 	if (write(STDERR_FILENO,
-		zlog_buf_str(a_thread->msg_buf), zlog_buf_len(a_thread->msg_buf)) < 0) {
+		zlog_buf_str(a_thread->msg_buf), (unsigned int)zlog_buf_len(a_thread->msg_buf)) < 0) {
 		zc_error("write fail, errno[%d]", errno);
 		return -1;
 	}
