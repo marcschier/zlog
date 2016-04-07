@@ -77,7 +77,14 @@ int zc_tls_destroy(zc_tls_t tls)
 
 int zc_mutex_init(zc_mutex_t* mtx)
 {
-    int rc;
+    int rc = 0;
+#ifdef _WIN32
+    CRITICAL_SECTION* mutex = malloc(sizeof(CRITICAL_SECTION));
+    if (!mutex)
+        return -1;
+    InitializeCriticalSection(mutex);
+    goto done;
+#else
 #if !defined(__STDC_NO_THREADS__)
     mtx_t* mutex = malloc(sizeof(mtx_t));
     if (!mutex)
@@ -85,6 +92,7 @@ int zc_mutex_init(zc_mutex_t* mtx)
     rc = mtx_init(mutex, mtx_plain | mtx_recursive);
     if(rc != thrd_success)
         goto err;
+    goto done;
 #else
     pthread_mutex_t* mutex = malloc(sizeof(pthread_mutex_t));
     if (!mutex)
@@ -92,19 +100,25 @@ int zc_mutex_init(zc_mutex_t* mtx)
     rc = pthread_mutex_init(mutex, NULL);
     if (rc != 0)
         goto err;
-#endif
-    *mtx = mutex;
-    return 0;
+    goto done;
 err:
     free(mutex);
     *mtx = NULL;
     return rc;
+#endif
+#endif
+done:
+    *mtx = mutex;
+    return 0;
 }
 
 int zc_mutex_trylock(zc_mutex_t mtx)
 {
-    int rc;
-#if !defined(__STDC_NO_THREADS__)
+    int rc = 0;
+#ifdef _WIN32
+    if (!TryEnterCriticalSection((CRITICAL_SECTION*)mtx))
+        return EBUSY;
+#elif !defined(__STDC_NO_THREADS__)
     rc = mtx_trylock((mtx_t*)mtx);
     if (rc == thrd_busy)
         return EBUSY;
@@ -115,7 +129,10 @@ int zc_mutex_trylock(zc_mutex_t mtx)
 }
 int zc_mutex_lock(zc_mutex_t mtx)
 {
-#if !defined(__STDC_NO_THREADS__)
+#ifdef _WIN32
+    EnterCriticalSection((CRITICAL_SECTION*)mtx);
+    return 0;
+#elif !defined(__STDC_NO_THREADS__)
     return mtx_lock((mtx_t*)mtx);
 #else
     return pthread_mutex_lock((pthread_mutex_t*)tls);
@@ -124,7 +141,10 @@ int zc_mutex_lock(zc_mutex_t mtx)
 
 int zc_mutex_unlock(zc_mutex_t mtx)
 {
-#if !defined(__STDC_NO_THREADS__)
+#ifdef _WIN32
+    LeaveCriticalSection((CRITICAL_SECTION*)mtx);
+    return 0;
+#elif !defined(__STDC_NO_THREADS__)
     return mtx_unlock((mtx_t*)mtx);
 #else
     return pthread_mutex_unlock((pthread_mutex_t*)tls);
@@ -134,7 +154,9 @@ int zc_mutex_unlock(zc_mutex_t mtx)
 int zc_mutex_destroy(zc_mutex_t mtx)
 {
     int rc = 0;
-#if !defined(__STDC_NO_THREADS__)
+#ifdef _WIN32
+    DeleteCriticalSection((CRITICAL_SECTION*)mtx);
+#elif !defined(__STDC_NO_THREADS__)
     mtx_destroy((mtx_t*)mtx);
 #else
     rc = pthread_mutex_destroy((pthread_mutex_t*)tls);

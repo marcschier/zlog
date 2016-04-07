@@ -166,12 +166,13 @@ static int zlog_file_cmp(zlog_file_t * a_file_1, zlog_file_t * a_file_2)
 
 static int zlog_rotater_add_archive_files(zlog_rotater_t * a_rotater)
 {
-#if 0
 	int rc = 0;
-	glob_t glob_buf;
-	size_t pathc;
+#ifndef _WIN32
+    glob_t glob_buf;
+    size_t pathc;
 	char **pathv;
 	zlog_file_t *a_file;
+#endif
 
 	a_rotater->files = zc_arraylist_new((zc_arraylist_del_fn)zlog_file_del);
 	if (!a_rotater->files) {
@@ -179,7 +180,8 @@ static int zlog_rotater_add_archive_files(zlog_rotater_t * a_rotater)
 		return -1;
 	}
 
-	/* scan file which is aa.*.log and aa */
+#ifndef _WIN32
+    /* scan file which is aa.*.log and aa */
 	rc = glob(a_rotater->glob_path, GLOB_ERR | GLOB_MARK | GLOB_NOSORT, NULL, &glob_buf);
 	if (rc == GLOB_NOMATCH) {
 		goto exit;
@@ -213,8 +215,10 @@ exit:
 	return 0;
 err:
 	globfree(&glob_buf);
-#endif
 	return -1;
+#else
+    return rc;
+#endif
 }
 
 static int zlog_rotater_seq_files(zlog_rotater_t * a_rotater)
