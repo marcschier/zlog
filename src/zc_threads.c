@@ -36,8 +36,9 @@ zc_pid_t zc_proc_self(void)
 int zc_tls_create(zc_tls_t* tls, void(*destroy)(void*))
 {
 #ifdef _WIN32
-    *tls = (zc_tls_t*)TlsAlloc();
-    return (DWORD)*tls == TLS_OUT_OF_INDEXES ? -1 : 0;
+    DWORD_PTR idx = TlsAlloc();
+    *tls = (zc_tls_t*)idx;
+    return (DWORD)idx == TLS_OUT_OF_INDEXES ? -1 : 0;
 #elif !defined(__STDC_NO_THREADS__)
     return tss_create((tss_t*)tls, destroy);
 #else
@@ -48,7 +49,7 @@ int zc_tls_create(zc_tls_t* tls, void(*destroy)(void*))
 void* zc_tls_get(zc_tls_t tls)
 {
 #ifdef _WIN32
-    return TlsGetValue((DWORD)tls);
+    return TlsGetValue((DWORD)(DWORD_PTR)tls);
 #elif !defined(__STDC_NO_THREADS__)
     return tss_get((tss_t)tls);
 #else
@@ -59,7 +60,7 @@ void* zc_tls_get(zc_tls_t tls)
 int zc_tls_set(zc_tls_t tls, void* val)
 {
 #ifdef _WIN32
-    return TlsSetValue((DWORD)tls, val) ? 0 : -1;
+    return TlsSetValue((DWORD)(DWORD_PTR)tls, val) ? 0 : -1;
 #elif !defined(__STDC_NO_THREADS__)
     return tss_set((tss_t)tls, val);
 #else
@@ -70,7 +71,7 @@ int zc_tls_set(zc_tls_t tls, void* val)
 int zc_tls_destroy(zc_tls_t tls)
 {
 #ifdef _WIN32
-    return TlsFree((DWORD)tls) ? 0 : -1;
+    return TlsFree((DWORD)(DWORD_PTR)tls) ? 0 : -1;
 #endif
     return 0;
 }
