@@ -96,12 +96,13 @@ static int zlog_rule_output_static_file_single(zlog_rule_t * a_rule, zlog_thread
 	}
 
 	if (do_file_reload) {
-		close(a_rule->static_fd);
+		if (a_rule->static_fd > 0) close(a_rule->static_fd);
 		a_rule->static_fd = open(a_rule->file_path,
 			O_WRONLY | O_APPEND | O_CREAT | a_rule->file_open_flags,
 			a_rule->file_perms);
 		if (a_rule->static_fd < 0) {
 			zc_error("open file[%s] fail, errno[%d]", a_rule->file_path, errno);
+            a_rule->static_fd = 0;
 			return -1;
 		}
 
@@ -829,6 +830,7 @@ zlog_rule_t *zlog_rule_new(char *line,
 				a_rule->file_perms);
 			if (a_rule->static_fd < 0) {
 				zc_error("open file[%s] fail, errno[%d]", a_rule->file_path, errno);
+                a_rule->static_fd = 0;
 				goto err;
 			}
 
@@ -957,18 +959,17 @@ void zlog_rule_del(zlog_rule_t * a_rule)
 		zc_arraylist_del(a_rule->dynamic_specs);
 		a_rule->dynamic_specs = NULL;
 	}
-	if (a_rule->static_fd) {
+	if (a_rule->static_fd > 0) {
 		if (close(a_rule->static_fd)) {
 			zc_error("close fail, maybe cause by write, errno[%d]", errno);
 		}
-	}
-#ifndef _WIN32
+        a_rule->static_fd = 0;
+    }
 	if (a_rule->pipe_fp) {
 		if (pclose(a_rule->pipe_fp) == -1) {
 			zc_error("pclose fail, errno[%d]", errno);
 		}
 	}
-#endif
 	if (a_rule->archive_specs) {
 		zc_arraylist_del(a_rule->archive_specs);
 		a_rule->archive_specs = NULL;

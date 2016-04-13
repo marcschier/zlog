@@ -331,11 +331,13 @@ int zc_unlock_fd(zc_lock_fd_t fd)
             DWORD err = GetLastError();
             zc_error("unlock file error : %d ", err);
         }
+        *(HANDLE*)fd = INVALID_HANDLE_VALUE;
     }
 #else
     ret = close(*(int*)fd) == 0;
     if (!ret)
         zc_error("unlock file error : %s ", strerror(errno));
+    *(int*)fd = 0;
 #endif
     free(fd);
     return ret ? 0 : -1;

@@ -67,7 +67,7 @@ void zlog_rotater_del(zlog_rotater_t *a_rotater)
 	zc_assert(a_rotater,);
 
 	if (a_rotater->lock_fd != NULL) {
-		if (!zc_unlock_fd(a_rotater->lock_fd)) {
+		if (0 != zc_unlock_fd(a_rotater->lock_fd)) {
 			zc_error("close fail, errno[%d]", errno);
 		}
         a_rotater->lock_fd = NULL;
@@ -482,7 +482,7 @@ static int zlog_rotater_unlock(zlog_rotater_t *a_rotater)
 {
 	int rc = 0;
 
-    if (!zc_unlock_fd(a_rotater->lock_fd)) {
+    if (0 != zc_unlock_fd(a_rotater->lock_fd)) {
 		rc = -1;
 	} else {
         a_rotater->lock_fd = NULL;

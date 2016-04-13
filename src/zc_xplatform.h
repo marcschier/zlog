@@ -86,6 +86,7 @@ extern int gethostname_nowinsock(char *name, size_t len);
 #define zlog_lstat stat
 
 #define popen _popen
+#define pclose _pclose
 #define open _open
 #define write _write
 #define close _close
