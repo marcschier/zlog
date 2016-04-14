@@ -96,8 +96,10 @@ static int zlog_rule_output_static_file_single(zlog_rule_t * a_rule, zlog_thread
 	}
 
 	if (do_file_reload) {
-		if (a_rule->static_fd > 0) close(a_rule->static_fd);
-		a_rule->static_fd = open(a_rule->file_path,
+		if (a_rule->static_fd > 0) 
+            close(a_rule->static_fd);
+		
+        a_rule->static_fd = open(a_rule->file_path,
 			O_WRONLY | O_APPEND | O_CREAT | a_rule->file_open_flags,
 			a_rule->file_perms);
 		if (a_rule->static_fd < 0) {
