@@ -37,7 +37,7 @@ void zlog_thread_profile(zlog_thread_t * a_thread, int flag)
 	return;
 }
 /*******************************************************************************/
-void zlog_thread_del(zlog_thread_t * a_thread)
+void zc_tls_free_call zlog_thread_del(zlog_thread_t * a_thread)
 {
 	zc_assert(a_thread,);
 	if (a_thread->mdc)

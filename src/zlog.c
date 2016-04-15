@@ -64,7 +64,7 @@ static int zlog_init_inner_from_string(const char *config_string)
     /* the 1st time in the whole process do init */
     if (zc_atomic_inc(&zlog_env_init_version) == 1) {
         /* clean up is done by OS when a thread call pthread_exit */
-        rc = zc_tls_create(&zlog_thread_key, (void (*) (void *)) zlog_thread_del);
+        rc = zc_tls_create(&zlog_thread_key, zlog_thread_del);
         if (rc) {
             zc_error("zc_tls_create fail, rc[%d]", rc);
             goto err;
@@ -111,7 +111,7 @@ static int zlog_init_inner(const char *confpath)
 	/* the 1st time in the whole process do init */
     if (zc_atomic_inc(&zlog_env_init_version) == 1) {
         /* clean up is done by OS when a thread call pthread_exit */
-		rc = zc_tls_create(&zlog_thread_key, (void (*) (void *)) zlog_thread_del);
+		rc = zc_tls_create(&zlog_thread_key, zlog_thread_del);
 		if (rc) {
 			zc_error("zc_tls_create fail, rc[%d]", rc);
 			goto err;

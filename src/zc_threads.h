@@ -29,7 +29,12 @@ zc_pid_t zc_proc_self(void);
 
 /* Thread local storage */
 typedef void* zc_tls_t;
-int zc_tls_create(zc_tls_t* tls, void(*destroy)(void*));
+#ifdef _WIN32
+/* for windows, destroy callback needs to be stdcall, not cdecl */
+#define zc_tls_free_call __stdcall
+#endif
+typedef void(zc_tls_free_call* zc_tls_destroy_t)(void*);
+int zc_tls_create(zc_tls_t* tls, zc_tls_destroy_t destroy);
 void* zc_tls_get(zc_tls_t tls);
 int zc_tls_set(zc_tls_t tls, void* val);
 int zc_tls_destroy(zc_tls_t tls);

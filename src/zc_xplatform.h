@@ -13,6 +13,9 @@
 #include <Windows.h>
 #include <WinBase.h>
 #include <stdbool.h>
+#if defined(_DEBUG)
+#define _CRTDBG_MAP_ALLOC
+#endif
 #endif
 
  /* Types */
