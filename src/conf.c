@@ -27,7 +27,7 @@
 #define ZLOG_CONF_DEFAULT_RULE "*.*        >stdout"
 #define ZLOG_CONF_DEFAULT_BUF_SIZE_MIN 1024
 #define ZLOG_CONF_DEFAULT_BUF_SIZE_MAX (2 * 1024 * 1024)
-#define ZLOG_CONF_DEFAULT_FILE_PERMS 0600
+#define ZLOG_CONF_DEFAULT_FILE_PERMS ZLOG_DEFAULT_FILE_PERMS
 #define ZLOG_CONF_DEFAULT_RELOAD_CONF_PERIOD 0
 #define ZLOG_CONF_DEFAULT_FSYNC_PERIOD 0
 #define ZLOG_CONF_BACKUP_ROTATE_LOCK_FILE "/tmp/zlog.lock"
@@ -413,7 +413,7 @@ exit:
 static int zlog_conf_build_with_file(zlog_conf_t * a_conf)
 {
 	int rc = 0;
-	struct zlog_lstat a_stat;
+	struct zlog_stat a_stat;
 	struct tm local_time;
 	FILE *fp = NULL;
 
@@ -428,7 +428,7 @@ static int zlog_conf_build_with_file(zlog_conf_t * a_conf)
 	int section = 0;
 	/* [global:1] [levels:2] [formats:3] [rules:4] */
 
-	if (zlog_lstat(a_conf->file, &a_stat)) {
+	if (zlog_stat(a_conf->file, &a_stat)) {
 		zc_error("lstat conf file[%s] fail, errno[%d]", a_conf->file,
 			 errno);
 		return -1;

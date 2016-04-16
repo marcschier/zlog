@@ -84,10 +84,7 @@ extern int gethostname_nowinsock(char *name, size_t len);
 #if defined(_WIN32)
 #include <io.h>
 
-#define zlog_fstat _fstat
-#define zlog_stat _stat
-#define zlog_lstat stat
-
+#define zlog_stat _stat64
 #define popen _popen
 #define pclose _pclose
 #define open _open
@@ -99,20 +96,18 @@ extern int gethostname_nowinsock(char *name, size_t len);
 #define STDOUT_FILENO fileno(stdout)
 #define STDERR_FILENO fileno(stderr)
 
+#define ZLOG_DEFAULT_FILE_PERMS _S_IWRITE
 #define FILE_NEWLINE "\n"
 #define FILE_NEWLINE_LEN 1
 #define MAXLEN_PATH 1024
 #else
 #include <unistd.h>
 #if defined(__APPLE__) && !defined(MAC_OS_X_VERSION_10_6)
-#define zlog_fstat fstat64
 #define zlog_stat stat64
-#define zlog_lstat stat64
 #else
-#define zlog_fstat fstat
 #define zlog_stat stat
-#define zlog_lstat stat
 #endif
+#define ZLOG_DEFAULT_FILE_PERMS 0x0600
 #define FILE_NEWLINE "\n"
 #define FILE_NEWLINE_LEN 1
 #define MAXLEN_PATH 1024
