@@ -211,7 +211,7 @@ int zc_rwlock_init(zc_rwlock_t* rwlock)
     if (!lock)
         return -1;
     InitializeSRWLock(&lock->lock);
-    lock->exclusive = false;
+    lock->exclusive = 0;
     *rwlock = lock;
 #else
     pthread_rwlock_t* lock = malloc(sizeof(pthread_rwlock_t));
@@ -259,8 +259,8 @@ int zc_rwlock_unlock(zc_rwlock_t rwlock)
     lock = (srw_lock_t*)rwlock;
     if (lock->exclusive)
     {
-        ReleaseSRWLockExclusive(&lock->lock);
         lock->exclusive = 0;
+        ReleaseSRWLockExclusive(&lock->lock);
     }
     else
     {

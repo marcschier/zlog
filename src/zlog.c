@@ -1168,7 +1168,7 @@ int zlog_set_record(const char *rname, zlog_record_fn record_output)
 		zlog_rule_set_record(a_rule, zlog_env_records);
 	}
 
-      zlog_set_record_exit:
+zlog_set_record_exit:
 	rd = zc_rwlock_unlock(zlog_env_lock);
 	if (rd) {
 		zc_error("zc_rwlock_unlock fail, rd=[%d]", rd);
