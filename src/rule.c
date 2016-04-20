@@ -96,15 +96,14 @@ static int zlog_rule_output_static_file_single(zlog_rule_t * a_rule, zlog_thread
 	}
 
 	if (do_file_reload) {
-		if (a_rule->static_fd > 0) 
+        if (a_rule->static_fd != -1) {
             close(a_rule->static_fd);
-		
+        }
         a_rule->static_fd = open(a_rule->file_path,
 			O_WRONLY | O_APPEND | O_CREAT | a_rule->file_open_flags,
 			a_rule->file_perms);
-		if (a_rule->static_fd < 0) {
+		if (a_rule->static_fd == -1) {
 			zc_error("open file[%s] fail, errno[%d]", a_rule->file_path, errno);
-            a_rule->static_fd = 0;
 			return -1;
 		}
 
@@ -170,7 +169,7 @@ static int zlog_rule_output_static_file_rotate(zlog_rule_t * a_rule, zlog_thread
 
 	fd = open(a_rule->file_path,
 		a_rule->file_open_flags | O_WRONLY | O_APPEND | O_CREAT, a_rule->file_perms);
-	if (fd < 0) {
+	if (fd == -1) {
 		zc_error("open file[%s] fail, errno[%d]", a_rule->file_path, errno);
 		return -1;
 	}
@@ -830,9 +829,8 @@ zlog_rule_t *zlog_rule_new(char *line,
 			a_rule->static_fd = open(a_rule->file_path,
 				O_WRONLY | O_APPEND | O_CREAT | a_rule->file_open_flags,
 				a_rule->file_perms);
-			if (a_rule->static_fd < 0) {
+			if (a_rule->static_fd == -1) {
 				zc_error("open file[%s] fail, errno[%d]", a_rule->file_path, errno);
-                a_rule->static_fd = 0;
 				goto err;
 			}
 
@@ -961,11 +959,11 @@ void zlog_rule_del(zlog_rule_t * a_rule)
 		zc_arraylist_del(a_rule->dynamic_specs);
 		a_rule->dynamic_specs = NULL;
 	}
-	if (a_rule->static_fd > 0) {
+	if (a_rule->static_fd >= 0) {
 		if (close(a_rule->static_fd)) {
 			zc_error("close fail, maybe cause by write, errno[%d]", errno);
 		}
-        a_rule->static_fd = 0;
+        a_rule->static_fd = -1;
     }
 	if (a_rule->pipe_fp) {
 		if (pclose(a_rule->pipe_fp) == -1) {
