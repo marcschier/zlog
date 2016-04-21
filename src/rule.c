@@ -613,6 +613,7 @@ zlog_rule_t *zlog_rule_new(char *line,
 
 	a_rule->file_perms = file_perms;
 	a_rule->fsync_period = fsync_period;
+    a_rule->static_fd = -1;
 
 	/* line         [f.INFO "%H/log/aa.log", 20MB * 12; MyTemplate]
 	 * selector     [f.INFO]
