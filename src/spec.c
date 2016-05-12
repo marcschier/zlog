@@ -205,7 +205,7 @@ static int zlog_spec_write_pid(zlog_spec_t * a_spec, zlog_thread_t * a_thread, z
 		if (a_thread->event->pid != a_thread->event->last_pid) {
 			a_thread->event->last_pid = a_thread->event->pid;
 			a_thread->event->pid_str_len
-				= sprintf(a_thread->event->pid_str, "%u", a_thread->event->pid);
+				= sprintf(a_thread->event->pid_str, "%u", (unsigned int)a_thread->event->pid);
 		}
 	}
 

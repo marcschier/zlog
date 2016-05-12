@@ -1,10 +1,16 @@
 
+#include <stdbool.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include "zc_threads.h"
 #include "zc_defs.h"
-#ifndef __STDC_NO_THREADS__
-#include <thr/threads.h>
+
+#ifdef _WIN32
 #elif _HAVE_PTHREAD_H
 #include <pthread.h>
+#elif !defined(__STDC_NO_THREADS__)
+#include <thr/threads.h>
 #else
 #error Either c11 or pthreads is needed
 #endif
@@ -39,10 +45,10 @@ int zc_tls_create(zc_tls_t* tls, zc_tls_destroy_t destroy)
     DWORD_PTR idx = FlsAlloc(destroy);
     *tls = (zc_tls_t*)idx;
     return (DWORD)idx == FLS_OUT_OF_INDEXES ? -1 : 0;
-#elif !defined(__STDC_NO_THREADS__)
-    return tss_create((tss_t*)tls, destroy);
+#elif _HAVE_PTHREAD_H
+    return pthread_key_create((pthread_key_t*)tls, destroy);
 #else
-    return pthread_create_key((pthread_key_t*)tls, destroy);
+    return tss_create((tss_t*)tls, destroy);
 #endif
 }
 
@@ -50,10 +56,10 @@ void* zc_tls_get(zc_tls_t tls)
 {
 #ifdef _WIN32
     return FlsGetValue((DWORD)(DWORD_PTR)tls);
-#elif !defined(__STDC_NO_THREADS__)
-    return tss_get((tss_t)tls);
-#else
+#elif _HAVE_PTHREAD_H
     return pthread_getspecific((pthread_key_t)tls);
+#else
+    return tss_get((tss_t)tls);
 #endif
 }
 
@@ -61,10 +67,10 @@ int zc_tls_set(zc_tls_t tls, void* val)
 {
 #ifdef _WIN32
     return FlsSetValue((DWORD)(DWORD_PTR)tls, val) ? 0 : -1;
-#elif !defined(__STDC_NO_THREADS__)
-    return tss_set((tss_t)tls, val);
-#else
+#elif _HAVE_PTHREAD_H
     return pthread_setspecific((pthread_key_t)tls, val);
+#else
+    return tss_set((tss_t)tls, val);
 #endif
 }
 
@@ -85,16 +91,7 @@ int zc_mutex_init(zc_mutex_t* mtx)
         return -1;
     InitializeCriticalSection(mutex);
     goto done;
-#else
-#if !defined(__STDC_NO_THREADS__)
-    mtx_t* mutex = malloc(sizeof(mtx_t));
-    if (!mutex)
-        return -1;
-    rc = mtx_init(mutex, mtx_plain | mtx_recursive);
-    if(rc != thrd_success)
-        goto err;
-    goto done;
-#else
+#elif _HAVE_PTHREAD_H
     pthread_mutex_t* mutex = malloc(sizeof(pthread_mutex_t));
     if (!mutex)
         return -1;
@@ -106,7 +103,14 @@ err:
     free(mutex);
     *mtx = NULL;
     return rc;
-#endif
+#else
+    mtx_t* mutex = malloc(sizeof(mtx_t));
+    if (!mutex)
+        return -1;
+    rc = mtx_init(mutex, mtx_plain | mtx_recursive);
+    if(rc != thrd_success)
+        goto err;
+    goto done;
 #endif
 done:
     *mtx = mutex;
@@ -119,12 +123,12 @@ int zc_mutex_trylock(zc_mutex_t mtx)
 #ifdef _WIN32
     if (!TryEnterCriticalSection((CRITICAL_SECTION*)mtx))
         return EBUSY;
-#elif !defined(__STDC_NO_THREADS__)
+#elif _HAVE_PTHREAD_H
+    rc = pthread_mutex_trylock((pthread_mutex_t*)mtx);
+#else
     rc = mtx_trylock((mtx_t*)mtx);
     if (rc == thrd_busy)
         return EBUSY;
-#else
-    rc = pthread_mutex_trylock((pthread_mutex_t*)tls);
 #endif
     return rc;
 }
@@ -133,10 +137,10 @@ int zc_mutex_lock(zc_mutex_t mtx)
 #ifdef _WIN32
     EnterCriticalSection((CRITICAL_SECTION*)mtx);
     return 0;
-#elif !defined(__STDC_NO_THREADS__)
-    return mtx_lock((mtx_t*)mtx);
+#elif _HAVE_PTHREAD_H
+    return pthread_mutex_lock((pthread_mutex_t*)mtx);
 #else
-    return pthread_mutex_lock((pthread_mutex_t*)tls);
+    return mtx_lock((mtx_t*)mtx);
 #endif
 }
 
@@ -145,10 +149,10 @@ int zc_mutex_unlock(zc_mutex_t mtx)
 #ifdef _WIN32
     LeaveCriticalSection((CRITICAL_SECTION*)mtx);
     return 0;
-#elif !defined(__STDC_NO_THREADS__)
-    return mtx_unlock((mtx_t*)mtx);
+#elif _HAVE_PTHREAD_H
+    return pthread_mutex_unlock((pthread_mutex_t*)mtx);
 #else
-    return pthread_mutex_unlock((pthread_mutex_t*)tls);
+    return mtx_unlock((mtx_t*)mtx);
 #endif
 }
 
@@ -157,10 +161,10 @@ int zc_mutex_destroy(zc_mutex_t mtx)
     int rc = 0;
 #ifdef _WIN32
     DeleteCriticalSection((CRITICAL_SECTION*)mtx);
-#elif !defined(__STDC_NO_THREADS__)
-    mtx_destroy((mtx_t*)mtx);
+#elif _HAVE_PTHREAD_H
+    rc = pthread_mutex_destroy((pthread_mutex_t*)mtx);
 #else
-    rc = pthread_mutex_destroy((pthread_mutex_t*)tls);
+    mtx_destroy((mtx_t*)mtx);
 #endif
     free(mtx);
     return rc;
@@ -169,11 +173,11 @@ int zc_mutex_destroy(zc_mutex_t mtx)
 int zc_atomic_inc(volatile int* ptr)
 {
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ == 201112) && (__STDC_NO_ATOMICS__!=1)
-    return atomic_fetch_add(ptr, 1)
+    return atomic_fetch_add(ptr, 1);
 #elif defined(WIN32)
     return InterlockedIncrement(ptr);
 #elif defined(__GNUC__)
-    return __sync_add_and_fetch(ptr, 1)
+    return __sync_add_and_fetch(ptr, 1);
 #else
 #error Need to add atomic incr.
 #endif
@@ -213,7 +217,7 @@ int zc_rwlock_init(zc_rwlock_t* rwlock)
     InitializeSRWLock(&lock->lock);
     lock->exclusive = 0;
     *rwlock = lock;
-#else
+#elif _HAVE_PTHREAD_H
     pthread_rwlock_t* lock = malloc(sizeof(pthread_rwlock_t));
     if (!lock)
         return -1;
@@ -234,7 +238,7 @@ int zc_rwlock_wrlock(zc_rwlock_t rwlock)
     lock = (srw_lock_t*)rwlock;
     AcquireSRWLockExclusive(&lock->lock);
     lock->exclusive = 1;
-#else
+#elif _HAVE_PTHREAD_H
     rc = pthread_rwlock_wrlock((pthread_rwlock_t*)rwlock);
 #endif
     return rc;
@@ -245,7 +249,7 @@ int zc_rwlock_rdlock(zc_rwlock_t rwlock)
     int rc = 0;
 #ifdef _WIN32
     AcquireSRWLockShared(&((srw_lock_t*)rwlock)->lock);
-#else
+#elif _HAVE_PTHREAD_H
     rc = pthread_rwlock_rdlock((pthread_rwlock_t*)rwlock);
 #endif
     return rc;
@@ -266,7 +270,7 @@ int zc_rwlock_unlock(zc_rwlock_t rwlock)
     {
         ReleaseSRWLockShared(&lock->lock);
     }
-#else
+#elif _HAVE_PTHREAD_H
     rc = pthread_rwlock_unlock((pthread_rwlock_t*)rwlock);
 #endif
     return rc;
@@ -276,7 +280,9 @@ int zc_rwlock_destroy(zc_rwlock_t rwlock)
 {
     int rc = 0;
 #ifndef _WIN32
+#if _HAVE_PTHREAD_H
     rc = pthread_rwlock_destroy((pthread_rwlock_t*)rwlock);
+#endif
 #endif
     free(rwlock);
     return rc;

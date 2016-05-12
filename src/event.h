@@ -10,6 +10,7 @@
 #define __zlog_event_h
 
 #include <stdarg.h>     /* for va_list */
+#include <time.h>
 #include "zc_defs.h"
 
 typedef enum {
@@ -50,8 +51,8 @@ typedef struct {
 	zlog_time_cache_t *time_caches;
 	int time_cache_count;
 
-    zc_pid_t pid;
-    zc_pid_t last_pid;
+	zc_pid_t pid;
+	zc_pid_t last_pid;
 	char pid_str[30 + 1];
 	size_t pid_str_len;
 

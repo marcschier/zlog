@@ -15,6 +15,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#ifndef _WIN32
+#include <syslog.h>
+#endif
 
 #include "rule.h"
 #include "format.h"

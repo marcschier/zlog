@@ -28,10 +28,12 @@ zc_tid_t zc_thread_self(void);
 zc_pid_t zc_proc_self(void);
 
 /* Thread local storage */
-typedef void* zc_tls_t;
+typedef unsigned long zc_tls_t;
 #ifdef _WIN32
 /* for windows, destroy callback needs to be stdcall, not cdecl */
 #define zc_tls_free_call __stdcall
+#else 
+#define zc_tls_free_call
 #endif
 typedef void(zc_tls_free_call* zc_tls_destroy_t)(void*);
 int zc_tls_create(zc_tls_t* tls, zc_tls_destroy_t destroy);
