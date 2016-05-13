@@ -43,7 +43,7 @@ int zc_tls_create(zc_tls_t* tls, zc_tls_destroy_t destroy)
 {
 #ifdef _WIN32 
     DWORD_PTR idx = FlsAlloc(destroy);
-    *tls = (zc_tls_t*)idx;
+    *tls = (zc_tls_t)idx;
     return (DWORD)idx == FLS_OUT_OF_INDEXES ? -1 : 0;
 #elif _HAVE_PTHREAD_H
     return pthread_key_create((pthread_key_t*)tls, destroy);
