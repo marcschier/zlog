@@ -173,7 +173,7 @@ int zc_mutex_destroy(zc_mutex_t mtx)
 int zc_atomic_inc(volatile int* ptr)
 {
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ == 201112) && (__STDC_NO_ATOMICS__!=1)
-    return atomic_fetch_add(ptr, 1);
+    return atomic_fetch_add(ptr, 1) + 1;
 #elif defined(WIN32)
     return InterlockedIncrement(ptr);
 #elif defined(__GNUC__)
