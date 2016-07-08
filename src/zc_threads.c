@@ -185,7 +185,6 @@ int zc_atomic_inc(volatile int* ptr)
 
 int zc_atomic_dec(volatile int* ptr)
 {
-    /*if macro DEC_REF returns DEC_RETURN_ZERO that means the ref count has reached zero.*/
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ == 201112) && (__STDC_NO_ATOMICS__!=1)
     return atomic_fetch_sub(ptr, 1) - 1;
 #elif defined(WIN32)
