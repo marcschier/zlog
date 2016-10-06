@@ -52,7 +52,7 @@ static void zlog_clean_rest_thread(void)
 	zlog_thread_t *a_thread;
 	a_thread = zc_tls_get(zlog_thread_key);
 	if (a_thread) zlog_thread_del(a_thread);
-    zc_tls_destroy(zlog_thread_key);
+    zc_tls_set(zlog_thread_key, NULL);
 	return;
 }
 
