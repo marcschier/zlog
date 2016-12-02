@@ -1,6 +1,9 @@
 #ifndef _ZLOG_WIN_H_
 #define _ZLOG_WIN_H_
 
+#ifdef _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+#endif
 #include <Windows.h>
 #include <WinBase.h>
 #include <time.h>

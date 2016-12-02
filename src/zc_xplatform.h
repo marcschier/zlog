@@ -9,6 +9,9 @@
 #define __zc_xplatform_h
 
 #if defined(_WIN32)
+#ifdef _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+#endif
 #define WIN32_LEAN_AND_MEAN 1
 #include <Windows.h>
 #include <WinBase.h>
