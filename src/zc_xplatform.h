@@ -97,6 +97,7 @@ extern int gethostname_nowinsock(char *name, size_t len);
 #define STDERR_FILENO fileno(stderr)
 
 #define ZLOG_DEFAULT_FILE_PERMS _S_IWRITE
+#define zlog_adjust_fperm(x) ZLOG_DEFAULT_FILE_PERMS
 #define FILE_NEWLINE "\n"
 #define FILE_NEWLINE_LEN 1
 #define MAXLEN_PATH 1024
@@ -108,6 +109,7 @@ extern int gethostname_nowinsock(char *name, size_t len);
 #define zlog_stat stat
 #endif
 #define ZLOG_DEFAULT_FILE_PERMS 0x0600
+#define zlog_adjust_fperm(x) x
 #define FILE_NEWLINE "\n"
 #define FILE_NEWLINE_LEN 1
 #define MAXLEN_PATH 1024

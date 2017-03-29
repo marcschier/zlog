@@ -630,6 +630,7 @@ static int zlog_conf_parse_line(zlog_conf_t * a_conf, char *line, int *section)
 			a_conf->buf_size_max = zc_parse_byte_size(value);
 		} else if (STRCMP(word_1, ==, "file") && STRCMP(word_2, ==, "perms")) {
 			sscanf(value, "%o", &(a_conf->file_perms));
+            a_conf->file_perms = zlog_adjust_fperm(a_conf->file_perms);
 		} else if (STRCMP(word_1, ==, "rotate") &&
 				STRCMP(word_2, ==, "lock") && STRCMP(word_3, ==, "file")) {
 			/* may overwrite the inner default value, or last value */
