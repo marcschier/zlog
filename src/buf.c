@@ -207,7 +207,7 @@ int zlog_buf_vprintf(zlog_buf_t * a_buf, const char *format, va_list args)
 {
 	va_list ap;
 	size_t size_left;
-	size_t nwrite;
+	int nwrite;
 
 	if (!a_buf->start) {
 		zc_error("pre-use of zlog_buf_resize fail, so can't convert");

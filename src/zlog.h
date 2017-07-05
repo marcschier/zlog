@@ -22,7 +22,9 @@ extern "C" {
 #   define ZLOG_CHECK_PRINTF(m,n)
 # endif
 
+#ifndef __zlog_category_h
 typedef struct zlog_category_s zlog_category_t;
+#endif
 
 int zlog_init_from_string(const char *config_string);
 int zlog_init(const char *confpath);

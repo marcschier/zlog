@@ -339,7 +339,7 @@ static int zlog_rotater_roll_files(zlog_rotater_t * a_rotater)
 
 static int zlog_rotater_parse_archive_path(zlog_rotater_t * a_rotater)
 {
-	size_t nwrite;
+	int nwrite;
 	size_t nread;
 	char *p;
 	size_t len;
@@ -390,7 +390,7 @@ static int zlog_rotater_parse_archive_path(zlog_rotater_t * a_rotater)
 		nwrite = snprintf(a_rotater->glob_path + len, sizeof(a_rotater->glob_path) - len,
 				"*%s", p + nread + 1);
 		if (nwrite < 0 || nwrite > sizeof(a_rotater->glob_path) - len) {
-			zc_error("nwirte[%d], overflow or errno[%d]", nwrite, errno);
+			zc_error("nwrite[%d], overflow or errno[%d]", nwrite, errno);
 			return -1;
 		}
 
