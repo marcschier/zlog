@@ -217,7 +217,7 @@ int zlog_buf_vprintf(zlog_buf_t * a_buf, const char *format, va_list args)
 	va_copy(ap, args);
 	size_left = a_buf->end_plus_1 - a_buf->tail;
 	nwrite = vsnprintf(a_buf->tail, size_left, format, ap);
-	if (nwrite >= 0 && nwrite < size_left) {
+	if (nwrite >= 0 && nwrite < (int)size_left) {
 		a_buf->tail += nwrite;
 		//*(a_buf->tail) = '\0';
 		return 0;
@@ -225,7 +225,7 @@ int zlog_buf_vprintf(zlog_buf_t * a_buf, const char *format, va_list args)
 		zc_error("vsnprintf fail, errno[%d]", errno);
 		zc_error("nwrite[%d], size_left[%ld], format[%s]", nwrite, size_left, format);
 		return -1;
-	} else if (nwrite >= size_left) {
+	} else if (nwrite >= (int)size_left) {
 		int rc;
 		//zc_debug("nwrite[%d]>=size_left[%ld],format[%s],resize", nwrite, size_left, format);
 		rc = zlog_buf_resize(a_buf, nwrite - size_left + 1);
